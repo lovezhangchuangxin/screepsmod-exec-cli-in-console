@@ -15,12 +15,13 @@
   "files": [
     "index.js",
     "README.md",
+    "README.zh.md",
     "LICENSE"
   ],
   "author": {
     "name": "lovezhangchuangxin",
     "email": "2911331070@qq.com",
-    "url": "https://github.com/lovezhangchuangxin"
+    "url": "https://github.com/lovezhangchuangxin/screepsmod-exec-cli-in-console"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.22.0"
