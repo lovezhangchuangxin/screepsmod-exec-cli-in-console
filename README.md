@@ -1,6 +1,6 @@
 # screepsmod-exec-cli-in-console
 
-[English](README.md) | [中文](README.zh.md)
+[English](./README.md) | [中文](./README.zh.md)
 
 Allow players to execute **(some)** Screeps server **CLI-only** commands from the **in-game console**.
 

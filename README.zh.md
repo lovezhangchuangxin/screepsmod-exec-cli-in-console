@@ -1,6 +1,6 @@
 # screepsmod-exec-cli-in-console
 
-[English](README.md) | [中文](README.zh.md)
+[English](./README.md) | [中文](./README.zh.md)
 
 让玩家可以在**游戏内控制台**执行（部分）Screeps 私服的**仅 CLI 可用**命令。
 
