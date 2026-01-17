@@ -1,0 +1,27 @@
+{
+  "name": "screepsmod-exec-cli-in-console",
+  "version": "1.0.0",
+  "description": "Allow players to execute (some) server CLI-only commands from the in-game console.",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [
+    "screeps",
+    "mod",
+    "execute",
+    "cli",
+    "console"
+  ],
+  "screeps_mod": true,
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "author": {
+    "name": "lovezhangchuangxin",
+    "email": "2911331070@qq.com",
+    "url": "https://github.com/lovezhangchuangxin"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.22.0"
+}
