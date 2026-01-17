@@ -455,19 +455,19 @@ async function resolveRole(userId) {
     userId = String(userId);
     const superSets = getEffectiveSuperAdminSets();
     const normalSets = getEffectiveNormalSets();
+    const defaultRole = SETTINGS.allowAllUsers ? 'normal': null
 
     if (superSets.ids.has(userId)) return 'super';
-    if (SETTINGS.allowAllUsers) return 'normal';
     if (normalSets.ids.has(userId)) return 'normal';
 
     const needNameLookup = superSets.names.size > 0 || normalSets.names.size > 0;
-    if (!needNameLookup) return null;
+    if (!needNameLookup) return defaultRole;
 
     const user = await common.storage.db.users.findOne({_id: userId});
     const usernameLower = user && user.username ? String(user.username).toLowerCase() : '';
     if (usernameLower && superSets.names.has(usernameLower)) return 'super';
     if (usernameLower && normalSets.names.has(usernameLower)) return 'normal';
-    return null;
+    return defaultRole;
 }
 
 function withTimeout(promise, ms, label) {
