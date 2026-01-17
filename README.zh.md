@@ -93,6 +93,14 @@ Game.cli.setControllerLevel('67c8...df8', 8)
 Game.cli.finishConstructionSites(['W1N9'])
 ```
 
+### 常用命令
+
+#### 修改所有墙的血量
+
+```js
+Game.cli.exec("(function(){var hp=300000000;return storage.db.rooms.find({}).then(function(rs){var rooms=(rs||[]).map(function(r){return r._id});return storage.db['rooms.objects'].find({type:'rampart',room:{$in:rooms}}).then(function(ws){var p=storage.db['rooms.objects'].count({_id:{$in:[]}});(ws||[]).forEach(function(w){p=p.then(function(){return storage.db['rooms.objects'].update({_id:w._id},{$set:{hits:hp,hitsMax:hp}});});});return p.then(function(){return 'OK ramparts='+(ws?ws.length:0);});});});})()")
+```
+
 ## 安全说明
 
 执行服务端 CLI JS 权限很大：

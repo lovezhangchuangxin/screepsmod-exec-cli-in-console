@@ -93,6 +93,14 @@ Sets `progress = progressTotal - 1` for construction sites in the given rooms.
 Game.cli.finishConstructionSites(['W1N9'])
 ```
 
+### Common commands
+
+#### Modify all ramparts HP
+
+```js
+Game.cli.exec("(function(){var hp=300000000;return storage.db.rooms.find({}).then(function(rs){var rooms=(rs||[]).map(function(r){return r._id});return storage.db['rooms.objects'].find({type:'rampart',room:{$in:rooms}}).then(function(ws){var p=storage.db['rooms.objects'].count({_id:{$in:[]}});(ws||[]).forEach(function(w){p=p.then(function(){return storage.db['rooms.objects'].update({_id:w._id},{$set:{hits:hp,hitsMax:hp}});});});return p.then(function(){return 'OK ramparts='+(ws?ws.length:0);});});});})()")
+```
+
 ## Security notes
 
 Executing arbitrary server CLI JS is powerful:
