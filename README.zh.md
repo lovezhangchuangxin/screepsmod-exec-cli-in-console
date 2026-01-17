@@ -101,6 +101,12 @@ Game.cli.finishConstructionSites(['W1N9'])
 Game.cli.exec("(function(){var hp=300000000;return storage.db.rooms.find({}).then(function(rs){var rooms=(rs||[]).map(function(r){return r._id});return storage.db['rooms.objects'].find({type:'rampart',room:{$in:rooms}}).then(function(ws){var p=storage.db['rooms.objects'].count({_id:{$in:[]}});(ws||[]).forEach(function(w){p=p.then(function(){return storage.db['rooms.objects'].update({_id:w._id},{$set:{hits:hp,hitsMax:hp}});});});return p.then(function(){return 'OK ramparts='+(ws?ws.length:0);});});});})()")
 ```
 
+#### 修改指定房间内的墙血量（如 W4N1）
+
+```js
+Game.cli.exec("storage.db['rooms.objects'].find({ type: { $in: ['constructedWall', 'rampart'] }, room: { $in: ['W4N1'] } }).then(resp => resp.map(cs => storage.db['rooms.objects'].findOne({ _id: cs._id }).then(csDetail => storage.db['rooms.objects'].update({ _id: cs._id }, { $set: { hits: 10000000 } }))))")
+```
+
 ## 安全说明
 
 执行服务端 CLI JS 权限很大：
