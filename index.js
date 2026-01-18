@@ -142,7 +142,7 @@ function normalizeIdSet(list) {
 }
 
 function normalizeNameSet(list) {
-    return new Set(normalizeList(list).map(i => i.toLowerCase()));
+    return new Set(normalizeList(list));
 }
 
 function getEffectiveSuperAdminSets() {
@@ -464,7 +464,7 @@ async function resolveRole(userId) {
     if (!needNameLookup) return defaultRole;
 
     const user = await common.storage.db.users.findOne({_id: userId});
-    const usernameLower = user && user.username ? String(user.username).toLowerCase() : '';
+    const usernameLower = user && user.username ? String(user.username) : '';
     if (usernameLower && superSets.names.has(usernameLower)) return 'super';
     if (usernameLower && normalSets.names.has(usernameLower)) return 'normal';
     return defaultRole;
