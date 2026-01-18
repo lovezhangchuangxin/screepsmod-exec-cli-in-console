@@ -1,6 +1,6 @@
 {
   "name": "screepsmod-exec-cli-in-console",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Allow players to execute (some) server CLI-only commands from the in-game console.",
   "main": "index.js",
   "scripts": {},
