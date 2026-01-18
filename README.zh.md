@@ -42,18 +42,42 @@
 
 ## 配置（非常重要）
 
-请直接编辑 `execute-cli.js` 顶部的 `SETTINGS`：
+在私服根目录（与 `mods.json` 同级）创建 `execute-cli.config.json` 配置文件。只需填写你想覆盖的字段，未填写的字段使用默认值。
 
-- `allowAllUsers`：若为 `true`，所有真实玩家都会被视为**普通用户**（不是超管）。除非本地/单机测试服，否则不要开。
-- `normalUserIds` / `normalUsernames`：当 `allowAllUsers=false` 时，普通用户白名单。
-- `superAdminUserIds` / `superAdminUsernames`：超管白名单。
-- `superAdminUsersCodeSelfOnly`：若为 `true`，即便是超管也不允许读/改其他用户在 `users.code` 里的代码（隐私保护）。
-- `allowedCodePrefixes`：如果不为空，只允许执行以这些前缀开头的代码字符串。
-- 限制项：
-  - `maxCodeLength`
-  - `maxOutputLines`
-  - `evalTimeoutMs`
-  - `promiseTimeoutMs`
+`execute-cli.config.json` 示例：
+
+```json
+{
+  "allowAllUsers": false,
+  "normalUsernames": ["player1", "player2"],
+  "superAdminUsernames": ["admin"],
+  "superAdminUserIds": ["1"]
+}
+```
+
+配置文件搜索顺序：
+1. `MODFILE` 环境变量指定的目录（Screeps 私服会将其设为 `mods.json` 路径）
+2. 当前工作目录（`process.cwd()`）
+3. mod 目录的上一级
+4. 上两/三级目录（适用于 `node_modules/` 安装方式）
+
+### 可用配置项
+
+| 选项 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `allowAllUsers` | boolean | `false` | 若为 `true`，所有真实玩家都会被视为**普通用户**（不是超管）。除非本地/单机测试服，否则不要开。 |
+| `normalUserIds` | string[] | `[]` | 普通用户的 User ID 列表（如 `["1", "4"]`）。仅当 `allowAllUsers=false` 时生效。 |
+| `normalUsernames` | string[] | `[]` | 普通用户的用户名列表。区分大小写。 |
+| `superAdminUserIds` | string[] | `[]` | 超管的 User ID 列表。 |
+| `superAdminUsernames` | string[] | `[]` | 超管的用户名列表。区分大小写。 |
+| `superAdminUsersCodeSelfOnly` | boolean | `true` | 若为 `true`，即便是超管也不允许读/改其他用户在 `users.code` 里的代码（隐私保护）。 |
+| `allowedCodePrefixes` | string[] | `[]` | 如果不为空，只允许执行以这些前缀开头的代码字符串。 |
+| `maxCodeLength` | number | `2000` | 每次调用允许的 CLI 代码最大长度。 |
+| `maxOutputLines` | number | `60` | 返回给玩家控制台的最大输出行数。 |
+| `evalTimeoutMs` | number | `2000` | 同步代码执行的 Node vm 超时时间（毫秒）。 |
+| `promiseTimeoutMs` | number | `5000` | 等待返回的 Promise/thenable 结果的超时时间（毫秒）。 |
+
+> **注意**：用户名匹配**区分大小写**，请确保使用与注册时完全一致的用户名。
 
 ## 用法（游戏内控制台）
 
@@ -127,7 +151,7 @@ Game.cli.exec("storage.db['rooms.objects'].find({ type: { $in: ['constructedWall
   - 确认已在 `mods.json` 启用并重启私服。
   - 确认环境可用 `isolated-vm`（Screeps 玩家沙箱依赖它）。
 - **提示 `[cli] denied: not allowed user`**：
-  - 把你的 userId / 用户名加入 `SETTINGS.normalUserIds/normalUsernames` 或 `superAdmin*`。
+  - 在 `execute-cli.config.json` 中把你的 userId / 用户名加入 `normalUserIds/normalUsernames` 或 `superAdminUserIds/superAdminUsernames`。
 - **输出缺失/被截断**：
   - 调整 `maxOutputLines`、`evalTimeoutMs`、`promiseTimeoutMs`。
 

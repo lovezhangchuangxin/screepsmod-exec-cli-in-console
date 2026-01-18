@@ -19,10 +19,29 @@ const EventEmitter = require('events').EventEmitter;
 const vm = require('vm');
 const util = require('util');
 
-// ---- Settings (edit me) ----------------------------------------------------
+// ---- Settings (defaults, can be overridden via execute-cli.config.json in server root) ----
+//
+// To customize settings WITHOUT editing this file, create `execute-cli.config.json` in the
+// server root directory (same level as mods.json). Example:
+//
+//   {
+//     "allowAllUsers": false,
+//     "normalUsernames": ["player1", "player2"],
+//     "superAdminUsernames": ["admin"]
+//   }
+//
+// Only include the fields you want to override; missing fields use defaults below.
 
-const SETTINGS = {
+const fs = require('fs');
+
+/**
+ * DEFAULT_SETTINGS - These are the default values for all configuration options.
+ * They can be overridden by `execute-cli.config.json` in the server root.
+ */
+const DEFAULT_SETTINGS = {
     /**
+     * allowAllUsers (boolean, default: false)
+     *
      * If true, EVERY real player is treated as a "normal" allowed user (see `resolveRole()`),
      * i.e. they can call `Game.cli.exec()` without being in `normalUserIds/normalUsernames`.
      *
@@ -36,23 +55,33 @@ const SETTINGS = {
     allowAllUsers: false,
 
     /**
+     * normalUserIds / normalUsernames (array of strings, default: [])
+     *
      * Normal permission allow-list (used only when allowAllUsers=false).
      * Normal users can ONLY access:
      * - storage.db.rooms (restricted to rooms they own)
      * - storage.db.objects / storage.db['rooms.objects'] (restricted to {user: self})
      * - storage.db.creeps (view over rooms.objects with {type:'creep', user:self})
+     *
+     * In many private servers user ids are simple strings like "1", "4", ...
+     * NPC users are usually "2" (Invader) and "3" (Source Keeper) and are blocked anyway.
      */
     normalUserIds: [],
     normalUsernames: [],
 
     /**
+     * superAdminUserIds / superAdminUsernames (array of strings, default: [])
+     *
      * Super admin allow-list.
-     * Super admins can execute any CLI JS and access all CLI sandbox objects.
+     * Super admins can execute any CLI JS and access all CLI sandbox objects
+     * (storage, system, map, bots, strongholds, etc).
      */
     superAdminUserIds: [],
     superAdminUsernames: [],
 
     /**
+     * superAdminUsersCodeSelfOnly (boolean, default: true)
+     *
      * Privacy guard:
      * Even for super admins, do NOT allow reading/modifying other users' code in `users.code`.
      * (Super admins can still access other tables unless you restrict them elsewhere.)
@@ -60,24 +89,107 @@ const SETTINGS = {
     superAdminUsersCodeSelfOnly: true,
 
     /**
+     * allowedCodePrefixes (array of strings, default: [])
+     *
      * Optional prefix allow-list for the CLI JS string.
      * If non-empty, only commands starting with one of these prefixes will be allowed.
      *
      * Examples:
      * - ['system.', 'map.']          -> allow only system.* and map.* helpers
      * - ['help(', 'print(']          -> allow only help()/print()
-     * - []                          -> allow any JS (still subject to user allow-list)
+     * - []                           -> allow any JS (still subject to user allow-list)
      */
     allowedCodePrefixes: [],
 
     /**
-     * Basic abuse limits.
+     * maxCodeLength (number, default: 2000)
+     *
+     * Maximum length of CLI code string allowed per call.
      */
     maxCodeLength: 2000,
+
+    /**
+     * maxOutputLines (number, default: 60)
+     *
+     * Maximum number of output lines sent back to the player's console per call.
+     */
     maxOutputLines: 60,
-    evalTimeoutMs: 2000, // Node vm timeout for sync execution
-    promiseTimeoutMs: 5000, // waiting for returned promise/thenable
+
+    /**
+     * evalTimeoutMs (number, default: 2000)
+     *
+     * Node vm timeout (in milliseconds) for synchronous code execution.
+     * Prevents infinite loops from blocking the server.
+     */
+    evalTimeoutMs: 2000,
+
+    /**
+     * promiseTimeoutMs (number, default: 5000)
+     *
+     * Timeout (in milliseconds) for waiting on returned promise/thenable results.
+     */
+    promiseTimeoutMs: 5000,
 };
+
+/**
+ * Load external config from `execute-cli.config.json` in the server root directory
+ * (same level as mods.json). If the file exists and is valid JSON, its values will
+ * be merged into SETTINGS. This way you can update the mod code without losing your config.
+ *
+ * Config file search order:
+ * 1. Directory of MODFILE env var (Screeps server sets this to mods.json path)
+ * 2. Current working directory (process.cwd())
+ * 3. One level up from this file's directory (for example-mods/ installation)
+ */
+function loadExternalConfig() {
+    const CONFIG_FILENAME = 'execute-cli.config.json';
+    const candidateDirs = [];
+
+    // 1. Use MODFILE env var if available (Screeps server sets this)
+    if (process.env.MODFILE) {
+        candidateDirs.push(path.dirname(path.resolve(process.cwd(), process.env.MODFILE)));
+    }
+
+    // 2. Current working directory
+    candidateDirs.push(process.cwd());
+
+    // 3. One level up from __dirname (for example-mods/ or similar)
+    candidateDirs.push(path.resolve(__dirname, '..'));
+
+    // 4. Two levels up (for node_modules/xxx/ installation)
+    candidateDirs.push(path.resolve(__dirname, '..', '..'));
+
+    // 5. Three levels up (for node_modules/@scope/xxx/ installation)
+    candidateDirs.push(path.resolve(__dirname, '..', '..', '..'));
+
+    // Deduplicate
+    const seen = new Set();
+    const uniqueDirs = candidateDirs.filter(d => {
+        const resolved = path.resolve(d);
+        if (seen.has(resolved)) return false;
+        seen.add(resolved);
+        return true;
+    });
+
+    for (const dir of uniqueDirs) {
+        const configPath = path.join(dir, CONFIG_FILENAME);
+        try {
+            if (fs.existsSync(configPath)) {
+                const raw = fs.readFileSync(configPath, 'utf8');
+                const ext = JSON.parse(raw);
+                console.log('[execute-cli mod] Loaded config from', configPath);
+                return ext;
+            }
+        } catch (e) {
+            console.error('[execute-cli mod] Failed to load config from', configPath, ':', e && (e.message || e));
+        }
+    }
+
+    console.log('[execute-cli mod] No config file found, using defaults. Searched:', uniqueDirs.map(d => path.join(d, CONFIG_FILENAME)).join(', '));
+    return {};
+}
+
+const SETTINGS = Object.assign({}, DEFAULT_SETTINGS, loadExternalConfig());
 
 // ---------------------------------------------------------------------------
 

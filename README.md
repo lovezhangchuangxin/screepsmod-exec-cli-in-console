@@ -42,18 +42,42 @@ Example `mods.json`:
 
 ## Configuration (IMPORTANT)
 
-Edit `execute-cli.js` and update `SETTINGS`:
+Create a `execute-cli.config.json` file in your server root directory (same level as `mods.json`). Only include the fields you want to override; missing fields use defaults.
 
-- `allowAllUsers`: if `true`, every real player becomes a **normal** user (NOT super admin). Keep `false` unless this is a local/dev server.
-- `normalUserIds` / `normalUsernames`: allow-list for **normal** users when `allowAllUsers=false`.
-- `superAdminUserIds` / `superAdminUsernames`: allow-list for **super** users.
-- `superAdminUsersCodeSelfOnly`: if `true`, even super admins cannot read/modify other users' code in `users.code`.
-- `allowedCodePrefixes`: if non-empty, only code starting with one of these prefixes is allowed.
-- Limits:
-  - `maxCodeLength`
-  - `maxOutputLines`
-  - `evalTimeoutMs`
-  - `promiseTimeoutMs`
+Example `execute-cli.config.json`:
+
+```json
+{
+  "allowAllUsers": false,
+  "normalUsernames": ["player1", "player2"],
+  "superAdminUsernames": ["admin"],
+  "superAdminUserIds": ["1"]
+}
+```
+
+Config file search order:
+1. Directory of `MODFILE` env var (Screeps server sets this to `mods.json` path)
+2. Current working directory (`process.cwd()`)
+3. One level up from the mod directory
+4. Two/three levels up (for `node_modules/` installations)
+
+### Available options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allowAllUsers` | boolean | `false` | If `true`, every real player becomes a **normal** user (NOT super admin). Keep `false` unless this is a local/dev server. |
+| `normalUserIds` | string[] | `[]` | User IDs for **normal** users (e.g. `["1", "4"]`). Used when `allowAllUsers=false`. |
+| `normalUsernames` | string[] | `[]` | Usernames for **normal** users. Case-sensitive. |
+| `superAdminUserIds` | string[] | `[]` | User IDs for **super admin** users. |
+| `superAdminUsernames` | string[] | `[]` | Usernames for **super admin** users. Case-sensitive. |
+| `superAdminUsersCodeSelfOnly` | boolean | `true` | If `true`, even super admins cannot read/modify other users' code in `users.code`. |
+| `allowedCodePrefixes` | string[] | `[]` | If non-empty, only code starting with one of these prefixes is allowed. |
+| `maxCodeLength` | number | `2000` | Maximum length of CLI code string allowed per call. |
+| `maxOutputLines` | number | `60` | Maximum number of output lines sent back to the player's console. |
+| `evalTimeoutMs` | number | `2000` | Node vm timeout (ms) for synchronous code execution. |
+| `promiseTimeoutMs` | number | `5000` | Timeout (ms) for waiting on returned promise/thenable results. |
+
+> **Note**: Username matching is **case-sensitive**. Make sure to use the exact username as registered.
 
 ## Usage (in-game console)
 
@@ -127,7 +151,7 @@ Role behavior:
   - Make sure the mod is enabled in `mods.json` and the server restarted.
   - Ensure your server has `isolated-vm` available (Screeps uses it for player sandbox).
 - **`[cli] denied: not allowed user`**:
-  - Add your user id / username to `SETTINGS.normalUserIds/normalUsernames` or `superAdmin*`.
+  - Add your user id / username to `normalUserIds/normalUsernames` or `superAdminUserIds/superAdminUsernames` in `execute-cli.config.json`.
 - **No output / output truncated**:
   - Adjust `maxOutputLines`, `evalTimeoutMs`, `promiseTimeoutMs`.
 
