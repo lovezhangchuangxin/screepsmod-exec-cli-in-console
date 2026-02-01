@@ -131,6 +131,21 @@ Game.cli.exec("(function(){var hp=300000000;return storage.db.rooms.find({}).the
 Game.cli.exec("storage.db['rooms.objects'].find({ type: { $in: ['constructedWall', 'rampart'] }, room: { $in: ['W4N1'] } }).then(resp => resp.map(cs => storage.db['rooms.objects'].findOne({ _id: cs._id }).then(csDetail => storage.db['rooms.objects'].update({ _id: cs._id }, { $set: { hits: 10000000 } }))))")
 ```
 
+#### Modify room SafeMode end time
+
+The `safeMode` field stores the **game tick** when safe mode **ends**. Pass `null` to end safe mode immediately.
+
+```js
+// Set to end at tick 50000
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W1N9' }, { $set: { safeMode: 50000 } })")
+
+// End safe mode immediately
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W1N9' }, { $set: { safeMode: null } })")
+
+// Bulk update multiple rooms
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: { $in: ['W1N9', 'W2N9', 'W3N9'] } }, { $set: { safeMode: 60000 } }, { multi: true })")
+```
+
 ## Security notes
 
 Executing arbitrary server CLI JS is powerful:

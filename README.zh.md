@@ -131,6 +131,21 @@ Game.cli.exec("(function(){var hp=300000000;return storage.db.rooms.find({}).the
 Game.cli.exec("storage.db['rooms.objects'].find({ type: { $in: ['constructedWall', 'rampart'] }, room: { $in: ['W4N1'] } }).then(resp => resp.map(cs => storage.db['rooms.objects'].findOne({ _id: cs._id }).then(csDetail => storage.db['rooms.objects'].update({ _id: cs._id }, { $set: { hits: 10000000 } }))))")
 ```
 
+#### 修改房间安全模式（SafeMode）结束时间
+
+`safeMode` 字段存储的是安全模式**结束时的游戏 tick 数**。传入 `null` 可以立即结束安全模式。
+
+```js
+// 设置在第 50000 tick 结束
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W1N9' }, { $set: { safeMode: 50000 } })")
+
+// 立即结束安全模式
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W1N9' }, { $set: { safeMode: null } })")
+
+// 批量修改多个房间
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: { $in: ['W1N9', 'W2N9', 'W3N9'] } }, { $set: { safeMode: 60000 } }, { multi: true })")
+```
+
 ## 安全说明
 
 执行服务端 CLI JS 权限很大：
