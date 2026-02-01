@@ -146,6 +146,45 @@ Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W
 Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: { $in: ['W1N9', 'W2N9', 'W3N9'] } }, { $set: { safeMode: 60000 } }, { multi: true })")
 ```
 
+#### Modify Spawn spawning remaining time
+
+The spawn's `spawning.spawnTime` field stores the **game tick** when spawning **ends**.
+
+```js
+// Complete spawning immediately for all spawns in a room (set to current tick)
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'spawn', room: 'W1N9', spawning: { $exists: true, $ne: null } }, { $set: { 'spawning.spawnTime': 63570 } }, { multi: true })")
+
+// Complete spawning immediately for a specific spawn
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: '697eeead116fd4004e484b9c' }, { $set: { 'spawning.spawnTime': 63570 } })")
+
+// Extend spawning time (set to end at specific tick)
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: '697ef513f24f06005e1a47b1' }, { $set: { 'spawning.spawnTime': 63600 } })")
+
+// Cancel spawning
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'spawn', room: 'W1N9' }, { $set: { spawning: null } }, { multi: true })")
+```
+
+#### Modify Creep lifetime
+
+The creep's `ageTime` field stores the **game tick** when the creep **dies**.
+
+```js
+// Extend lifetime (set to die at tick 70000)
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }, { $set: { ageTime: 70000 } })")
+
+// Kill immediately (set to current tick or lower)
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }, { $set: { ageTime: 63570 } })")
+
+// Bulk extend lifetime for all friendly creeps in a room
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', room: 'W1N9', user: 'your_username' }, { $set: { ageTime: 70000 } }, { multi: true })")
+
+// Update by _id
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: 'creep_id_here' }, { $set: { ageTime: 70000 } })")
+
+// Query current creep death time
+Game.cli.exec("storage.db['rooms.objects'].findOne({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }).then(function(c) { return { name: c.name, ageTime: c.ageTime }; })")
+```
+
 ## Security notes
 
 Executing arbitrary server CLI JS is powerful:

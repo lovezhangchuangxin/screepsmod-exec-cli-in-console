@@ -146,6 +146,45 @@ Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: 'W
 Game.cli.exec("storage.db['rooms.objects'].update({ type: 'controller', room: { $in: ['W1N9', 'W2N9', 'W3N9'] } }, { $set: { safeMode: 60000 } }, { multi: true })")
 ```
 
+#### 修改 Spawn 孵化剩余时间
+
+Spawn 的 `spawning.spawnTime` 字段存储的是孵化**结束时的游戏 tick 数**。
+
+```js
+// 立即完成房间内所有 spawn 的孵化（设置为当前 tick）
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'spawn', room: 'W1N9', spawning: { $exists: true, $ne: null } }, { $set: { 'spawning.spawnTime': 63570 } }, { multi: true })")
+
+// 立即完成指定 spawn 的孵化
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: '697eeead116fd4004e484b9c' }, { $set: { 'spawning.spawnTime': 63570 } })")
+
+// 延长孵化时间（设置到指定 tick 结束）
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: '697ef513f24f06005e1a47b1' }, { $set: { 'spawning.spawnTime': 63600 } })")
+
+// 取消孵化
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'spawn', room: 'W1N9' }, { $set: { spawning: null } }, { multi: true })")
+```
+
+#### 修改 Creep 寿命
+
+Creep 的 `ageTime` 字段存储的是 creep **死亡时的游戏 tick 数**。
+
+```js
+// 延长寿命（设置到第 70000 tick 死亡）
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }, { $set: { ageTime: 70000 } })")
+
+// 立即死亡（设置为当前 tick 或更小的值）
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }, { $set: { ageTime: 63570 } })")
+
+// 批量延长房间内所有己方 creep 的寿命
+Game.cli.exec("storage.db['rooms.objects'].update({ type: 'creep', room: 'W1N9', user: 'your_username' }, { $set: { ageTime: 70000 } }, { multi: true })")
+
+// 通过 _id 修改
+Game.cli.exec("storage.db['rooms.objects'].update({ _id: 'creep_id_here' }, { $set: { ageTime: 70000 } })")
+
+// 查询当前 creep 的死亡时间
+Game.cli.exec("storage.db['rooms.objects'].findOne({ type: 'creep', name: '7c9kp-班尼特-6fwjp' }).then(function(c) { return { name: c.name, ageTime: c.ageTime }; })")
+```
+
 ## 安全说明
 
 执行服务端 CLI JS 权限很大：
